@@ -1,7 +1,6 @@
 code = input("Enter code string: ")
 cursor = 0
 perm = code[:]
-array = [][500]
 from abc import ABC, abstractmethod
 
 def convert(code):
@@ -12,17 +11,8 @@ def parseExeption(string):
     print("parse error at: " + cursor.toString() + " where is " + code[cursor] + " expecting "+ string)
 
 
-def printNode(node, y):
-    for i in node.nodes:
-        array[cursor][y] = i.name
-        printNode(i, y + 1)
-        cursor + +
-    for i in range len(array2d):
-        for j in range len(array2d[i]):
+def printNode(node, array):
 
-            print(array2d[i][j], "     ")
-
-        print()
 
 class AbstractNode(ABC):
     nodes = []
@@ -89,7 +79,7 @@ class BasicNode(AbstractNode):
     def parse(self):
         token = code[cursor]
         if token in self.basic:
-            self.nodes[0] = token
+            self.nodes[0] = GenericNode(token)
             self.iterateCursor()
             return True
         else:
@@ -99,11 +89,23 @@ class NonTokenNode(AbstractNode):
 
     def __init__(self, string):
         super(self)
-        self.nodes[0] = string
+        self.nodes[0] = GenericNode(string)
 
     def name(self):
         return "Non-token"
 
+
+class GenericNode(AbstractNode):
+
+    def __init__(self, string):
+        super(self)
+        self.name1 =  string
+
+    def name(self):
+        return self.name1
+
+    def parse(self):
+        return True
 
 class BlockNode(AbstractNode):
 
@@ -468,16 +470,10 @@ class FactorNode(AbstractNode):
                     return True
 
         elif self.reset()\
-            and self.verify_and_add_non_token_node(0, FactorValNode()):
+            and self.verify_and_add_token(0, NonTokenNode(code[cursor]))\
+            and self.initial_cursor:
                     self.set_permanent()
                     return True
         else:
             return False
 
-class FactorValNode(AbstractNode):
-
-    def name(self):
-        return "FactorVal"
-
-    def parse(self):
-        val = code[cursor]
