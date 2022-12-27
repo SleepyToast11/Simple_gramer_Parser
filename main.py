@@ -35,7 +35,7 @@ import sys
 #   or not to the parent tree. this happens for each node recursively and when the parser arrives at a non-token node,
 #   it verifies if the name is legal and parses moves the cursor to the next token of code. this effectively makes
 #   this whole parser just a big if statement linked together and the final value of this of programNode
-#   is if the string is pared or not. An exeption error can be created, but the output is still a bit buggy.
+#   is if the string is pared or not. An exception error can be created, but the output is still a bit buggy.
 #   Also note, that the string to be parsed has a first pass to tokenize the string between each space,
 #   then a program root node is created and parsed. The whole parser uses global variable for the cursor and parse
 #   string for simplicity’s sake. All nodes are created from the same AbstractNode, so they have very similar functions.
