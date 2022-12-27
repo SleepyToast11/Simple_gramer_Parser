@@ -1,73 +1,130 @@
-code = input("Enter code string: ")
+# Jerome Sparnaay, Muhi Eddin Tahhan
+import sys
+
+#   Q2:
+#    based on software spec lecture notes
+#   ⟨block⟩ ::= { ⟨decls⟩ ⟨stmts⟩ }
+#   ⟨decls⟩ ::= ⟨decl⟩ ⟨decls⟩ | ε
+#   ⟨decl⟩ ::= ⟨type⟩ ID ;
+#   ⟨type⟩ ::= BASIC ⟨typeCl⟩
+#   ⟨typeCl⟩ ::= [ NUM ] ⟨typeCl⟩ | ε
+#   ⟨stmts⟩ ::= ⟨stmt⟩ ⟨stmts⟩ | ε
+#   ⟨stmt⟩ ::= ⟨loc⟩ = ⟨bool⟩ ;
+#   | IF ( ⟨bool⟩ ) ⟨stmt⟩ ELSE ⟨stmt⟩
+#   | WHILE ( ⟨bool⟩ ) ⟨stmt⟩
+#   | ⟨block⟩
+#   ⟨loc⟩ ::= ID ⟨locCl⟩
+#   ⟨locCl⟩ ::= [ ⟨bool⟩ ] ⟨locCl⟩ | ε
+#   ⟨bool⟩ ::= ⟨join⟩ || ⟨bool⟩ | ⟨join⟩
+#   ⟨join⟩ ::= ⟨equality⟩ && ⟨join⟩ | ⟨equality⟩
+#   ⟨equality⟩ ::= ⟨rel⟩ ⟨equalityCl⟩
+#   ⟨equalityCl⟩ ::= == ⟨equalityCl⟩ | != ⟨equalityCl⟩ | ε
+#   ⟨rel⟩ ::= ⟨expr⟩ ⟨relTail⟩
+#   ⟨relTail⟩ ::= < ⟨expr⟩ | > ⟨expr⟩ | ε
+#   ⟨expr⟩ ::= ⟨term⟩ ⟨exprTail⟩
+#   ⟨exprTail⟩ ::= + ⟨expr⟩ | - ⟨expr⟩ | ε
+#   ⟨term⟩ ::= ⟨unary⟩ ⟨termTail⟩
+#   ⟨termTail⟩ ::= * ⟨term⟩ | / ⟨term⟩ | ε
+#   ⟨unary⟩ ::= ! ⟨unary⟩ | - ⟨unary⟩ | ⟨factor⟩
+#   ⟨factor⟩ ::= ( ⟨bool⟩ ) | ⟨loc⟩ | NUM | REAL | TRUE | FALSE
+
+
+#   The parser works by chaining inside if statements verifications and tree building. We translate
+#   the rules by creating a node and passing it to a common verifier (this is the one from the super class)
+#   . Then the node is parsed inside the verifier and the return value is used to determine if the node is attached
+#   or not to the parent tree. this happens for each node recursively and when the parser arrives at a non-token node,
+#   it verifies if the name is legal and parses moves the cursor to the next token of code. this effectively makes
+#   this whole parser just a big if statement linked together and the final value of this of programNode
+#   is if the string is pared or not. An exeption error can be created, but the output is still a bit buggy.
+#   Also note, that the string to be parsed has a first pass to tokenize the string between each space,
+#   then a program root node is created and parsed. The whole parser uses global variable for the cursor and parse
+#   string for simplicity’s sake. All nodes are created from the same AbstractNode, so they have very similar functions.
+
 cursor = 0
-perm = code[:]
-from abc import ABC, abstractmethod
 
 def convert(code):
-    array= code.split()
+    array = code.split()
     return array
 
 def parseExeption(string):
-    print("parse error at: " + cursor.toString() + " where is " + code[cursor] + " expecting "+ string)
+    print("parse error at: " + str(cursor) + " where is " + code[cursor] + " expecting "+ string)
 
 
 def printNode(node, array):
+    print()
+    if node is not None:
+        array.insert(0, node.name())
+        for i in array:
+            if i is not None:
+                print(i, end=', ')
+        print()
+
+        if node.nodes is not None:
+            for i in node.nodes:
+                printNode(i, array[:])
+
+inp = open(str(sys.argv[1]))
 
 
-class AbstractNode(ABC):
-    nodes = []
-    temp_nodes = []
+code = convert(inp)
+
+
+
+class AbstractNode():
     option = None
 
-    def __init__(self):
+
+
+    def __init__(self, scope):
         self.initial_cursor = cursor
+        self.nodes = []
+        self.scope = scope
 
-    def set_permanent(self):
-        self.nodes = self.temp_nodes
-        for i in self.nodes:
-            if i is None:
-                del self.nodes[i]
 
-    @property
-    @abstractmethod
     def name(self):
-        pass
+        return None
 
     def reset(self):
-        self.temp_nodes.clear()
         global cursor
         cursor = self.initial_cursor
         return True
 
     def verify_and_add_token(self, index, node):
-        if node.parse() is None:
-            self.nodes[index] = None
+        val = node.parse()
+        if val is None:
             return True
-        if node.parse():
-            self.temp_nodes[index] = node
+        elif val:
+            self.nodes.append(node)
             return True
         else:
             return False
 
     def iterate_cursor(self):
+        global cursor
         cursor += 1
         return True
 
-    def verify_and_add_non_token_node(self, index, string):
+    def verify_and_add_non_token_node(self, string):
         if code[cursor] is string:
-            self.nodes[index] = NonTokenNode(string)
-            self.iterateCursor()
+            self.nodes.append(GenericNode(string))
+            self.iterate_cursor()
             return True
         else:
             return False
 
 
-    @abstractmethod
+    def check_scope(self):
+        for child in self.nodes:
+            child.check_scope()
+
     def parse(self):
-        ...
-    #for final project:
-    #@abstractmethod
-    #def evaluate(self)
+        return True
+
+    def check_semantics(self):
+        for child in self.nodes:
+            child.check_semantics()
+
+
 
 class BasicNode(AbstractNode):
 
@@ -79,17 +136,30 @@ class BasicNode(AbstractNode):
     def parse(self):
         token = code[cursor]
         if token in self.basic:
-            self.nodes[0] = GenericNode(token)
-            self.iterateCursor()
+            self.nodes.append(GenericNode(token))
+            self.iterate_cursor()
             return True
         else:
             return False
 
+
+class ProgramNode(AbstractNode):
+
+    def name(self):
+        return "Program"
+
+    def parse(self):
+        if self.verify_and_add_token(0, BlockNode({})):
+            return True
+
+        else:
+            parseExeption("?")
+
 class NonTokenNode(AbstractNode):
 
-    def __init__(self, string):
-        super(self)
-        self.nodes[0] = GenericNode(string)
+    def __init__(self, scope, string):
+        super().__init__(scope)
+        self.nodes.append(GenericNode(string))
 
     def name(self):
         return "Non-token"
@@ -97,9 +167,10 @@ class NonTokenNode(AbstractNode):
 
 class GenericNode(AbstractNode):
 
-    def __init__(self, string):
-        super(self)
-        self.name1 =  string
+    def __init__(self, scope, string):
+        super().__init__(scope)
+        self.name1 = string
+        self.nodes = None
 
     def name(self):
         return self.name1
@@ -107,7 +178,11 @@ class GenericNode(AbstractNode):
     def parse(self):
         return True
 
+
 class BlockNode(AbstractNode):
+
+    def __init__(self, scope):
+        self.scope = scope.copy()
 
     def name(self):
         return "Block"
@@ -115,9 +190,9 @@ class BlockNode(AbstractNode):
     def parse(self):
         if self.verify_and_add_non_token_node(0, "{")\
             and self.verify_and_add_token(1, DeclsNode())\
-            and self.verify_and_add_token(2, StmtsNode()):
-                    self.set_permanent()
-                    return True
+            and self.verify_and_add_token(2, StmtsNode())\
+            and self.verify_and_add_non_token_node(3, "}"):
+                return True
         else:
             return False
 
@@ -128,7 +203,7 @@ class DeclsNode(AbstractNode):
     def parse(self):
         if self.verify_and_add_token(0, DeclNode())\
             and self.verify_and_add_token(1, DeclsNode()):
-                self.set_permanent()
+
                 return True
         else:
             return None
@@ -142,7 +217,7 @@ class DeclNode(AbstractNode):
         if self.verify_and_add_token(0, TypeNode())\
             and self.verify_and_add_token(1, IDNode())\
             and self.verify_and_add_non_token_node(2, ";"):
-                self.set_permanent()
+
                 return True
         else:
             return False
@@ -156,7 +231,7 @@ class TypeNode(AbstractNode):
     def parse(self):
         if self.verify_and_add_token(0, BasicNode())\
             and self.verify_and_add_token(1, TypeClNode()):
-                    self.set_permanent()
+
                     return True
         else:
             return False
@@ -168,9 +243,9 @@ class TypeClNode(AbstractNode):
 
     def parse(self):
         if self.verify_and_add_non_token_node(0, "[")\
-            and self.verify_and_add_token(1, NumNode())\
+            and self.verify_and_add_token(1, GenericNode(code[cursor]))\
             and self.verify_and_add_non_token_node(2, "]"):
-                    self.set_permanent()
+
                     return True
         else:
             return None
@@ -185,7 +260,7 @@ class StmtsNode(AbstractNode):
         #since python uses lazy eval, this shouldnt create an infinite loop
         if self.verify_and_add_token(0, StmtNode())\
             and self.verify_and_add_token(1, StmtsNode()):
-            self.set_permanent()
+
             return True
         else:
             return None
@@ -202,7 +277,7 @@ class StmtNode(AbstractNode):
             and self.verify_and_add_token(2, BoolNode())\
             and self.verify_and_add_non_token_node(3, ";"):
                     self.option = 0
-                    self.set_permanent()
+
                     return True
 
         elif self.reset()\
@@ -214,7 +289,7 @@ class StmtNode(AbstractNode):
             and self.verify_and_add_non_token_node(5, "else")\
             and self.verify_and_add_token(6, StmtNode()):
                     self.option = 1
-                    self.set_permanent()
+
                     return True
 
         elif self.reset()\
@@ -224,13 +299,13 @@ class StmtNode(AbstractNode):
             and self.verify_and_add_non_token_node(3, ")")\
             and self.verify_and_add_token(3, StmtNode()):
                     self.option = 2
-                    self.set_permanent()
+
                     return True
 
         elif self.reset()\
             and self.verify_and_add_token(0, BlockNode()):
             self.option = 3
-            self.set_permanent()
+
             return True
 
         else:
@@ -238,8 +313,20 @@ class StmtNode(AbstractNode):
 
 
 class IDNode(AbstractNode):
+
     def name(self):
         "ID"
+
+    def parse(self):
+        reserved_symbole = {"{", "}", "[", "]", ";", "int", "bool", "char", "double", "="}
+        token = code[cursor]
+        if token not in reserved_symbole and not token.isdigit():
+            self.nodes.append(GenericNode(code[cursor]))
+            self.iterate_cursor()
+            return True
+        else:
+            return False
+
 
 class LocNode(AbstractNode):
 
@@ -247,12 +334,12 @@ class LocNode(AbstractNode):
         return "Loc"
 
     def parse(self):
-        if self.verify_and_add_token(0, IDNode)\
+        if self.verify_and_add_token(0, IDNode())\
             and self.verify_and_add_token(1, LocClNode()):
-                    self.set_permanent()
+
                     return True
         else:
-            return None
+            return False
 
 class LocClNode(AbstractNode):
 
@@ -264,10 +351,10 @@ class LocClNode(AbstractNode):
             and self.verify_and_add_token(1, BoolNode())\
             and self.verify_and_add_non_token_node(2, "]")\
             and self.verify_and_add_token(3, LocClNode()):
-                    self.set_permanent()
+
                     return True
         else:
-            return False
+            return None
 
 class BoolNode(AbstractNode):
 
@@ -278,8 +365,11 @@ class BoolNode(AbstractNode):
         if self.verify_and_add_token(0, JoinNode())\
             and self.verify_and_add_non_token_node(1, "||")\
             and self.verify_and_add_token(2, BoolNode()):
-                    self.set_permanent()
+
                     return True
+        elif self.reset()\
+                and self.verify_and_add_token(0, JoinNode()):
+                        return True
         else:
             return False
 
@@ -292,11 +382,11 @@ class JoinNode(AbstractNode):
         if self.verify_and_add_token(0, EqualityNode())\
             and self.verify_and_add_non_token_node(1, "&&")\
             and self.verify_and_add_token(2, BoolNode()):
-                    self.set_permanent()
+
                     return True
         elif self.reset()\
             and self.verify_and_add_token(0, EqualityNode()):
-                    self.set_permanent()
+
                     return True
         else:
             return False
@@ -309,7 +399,7 @@ class EqualityNode(AbstractNode):
     def parse(self):
         if self.verify_and_add_token(0, RelNode())\
             and self.verify_and_add_token(1, EqualityClNode()):
-                    self.set_permanent()
+
                     return True
         else:
             return False
@@ -322,13 +412,13 @@ class EqualityClNode(AbstractNode):
     def parse(self):
         if self.verify_and_add_non_token_node(0, "==")\
             and self.verify_and_add_token(1, EqualityClNode()):
-                    self.set_permanent()
+
                     return True
 
         elif self.reset()\
                 and self.verify_and_add_non_token_node(0, "!=")\
                 and self.verify_and_add_token(1, EqualityClNode()):
-                        self.set_permanent()
+
                         return True
         else:
             return None
@@ -341,7 +431,7 @@ class RelNode(AbstractNode):
     def parse(self):
         if self.verify_and_add_token(0, ExprNode())\
             and self.verify_and_add_token(1, RelTailNode()):
-                self.set_permanent()
+
                 return True
         else:
             return False
@@ -354,11 +444,12 @@ class RelTailNode(AbstractNode):
     def parse(self):
         if self.verify_and_add_non_token_node(0, "<")\
             and self.verify_and_add_token(1, ExprNode()):
-                    self.set_permanent()
+
                     return True
-        elif self.verify_and_add_non_token_node(0, ">")\
+        elif self.reset()\
+            and self.verify_and_add_non_token_node(0, ">")\
             and self.verify_and_add_token(1, ExprNode()):
-                    self.set_permanent()
+
                     return True
         else:
             return None
@@ -371,7 +462,7 @@ class ExprNode(AbstractNode):
     def parse(self):
         if self.verify_and_add_token(0, TermNode())\
             and self.verify_and_add_token(1, ExprTailNode()):
-                    self.set_permanent()
+
                     return True
         else:
             return False
@@ -384,12 +475,12 @@ class ExprTailNode(AbstractNode):
     def parse(self):
         if self.verify_and_add_non_token_node(0, "+")\
             and self.verify_and_add_token(1, ExprTailNode()):
-                    self.set_permanent()
+
                     return True
         elif self.reset()\
                 and self.verify_and_add_non_token_node(0, "-")\
                 and self.verify_and_add_token(1, ExprTailNode()):
-                        self.set_permanent()
+
                         return True
         else:
             return None
@@ -401,8 +492,8 @@ class TermNode(AbstractNode):
 
     def parse(self):
         if self.verify_and_add_token(0, UnaryNode())\
-            and self.verify_and_add_token(1, TermTailNode):
-                    self.set_permanent()
+            and self.verify_and_add_token(1, TermTailNode()):
+
                     return True
         else:
             return False
@@ -415,13 +506,13 @@ class TermTailNode(AbstractNode):
     def parse(self):
         if self.verify_and_add_non_token_node(0, "*")\
             and self.verify_and_add_token(1, TermNode()):
-                    self.set_permanent()
+
                     return True
 
         elif self.reset()\
                 and self.verify_and_add_non_token_node(0, "/") \
                 and self.verify_and_add_token(1, TermNode()):
-                        self.set_permanent()
+
                         return True
         else:
             return None
@@ -433,20 +524,20 @@ class UnaryNode(AbstractNode):
 
     def parse(self):
         if self.verify_and_add_non_token_node(0, "!")\
-            and self.verify_and_add_token(1, UnaryNode):
-                    self.set_permanent()
+            and self.verify_and_add_token(1, UnaryNode()):
+
                     return True
 
 
         elif self.reset()\
                 and self.verify_and_add_non_token_node(0, "-") \
-                and self.verify_and_add_token(1, UnaryNode):
-                    self.set_permanent()
+                and self.verify_and_add_token(1, UnaryNode()):
+
                     return True
 
         elif self.reset()\
             and self.verify_and_add_token(0, FactorNode()):
-                    self.set_permanent()
+
                     return True
         else:
             return False
@@ -454,26 +545,37 @@ class UnaryNode(AbstractNode):
 
 class FactorNode(AbstractNode):
 
+    reserved_symbole = {"{", "}", "[", "]", ";", "int", "bool", "char", "double", "="}
+
     def name(self):
         return "Factor"
 
     def parse(self):
-        if self.verify_and_add_non_token_node(0, "(")\
-            and self.verify_and_add_token(1, BoolNode)\
-            and self.verify_and_add_non_token_node(2, ")"):
-                    self.set_permanent()
+        token = code[cursor]
+        if token not in self.reserved_symbole:
+            if self.verify_and_add_non_token_node(0, "(")\
+                and self.verify_and_add_token(1, BoolNode())\
+                and self.verify_and_add_non_token_node(2, ")"):
+
+                        return True
+
+            elif self.reset()\
+                and self.verify_and_add_token(0, LocNode()):
+
                     return True
 
-        elif self.reset()\
-            and self.verify_and_add_token(0, LocNode):
-                    self.set_permanent()
-                    return True
+            elif self.reset():
+                    self.nodes.append(GenericNode(code[cursor]))
+                    self.iterate_cursor()
 
-        elif self.reset()\
-            and self.verify_and_add_token(0, NonTokenNode(code[cursor]))\
-            and self.initial_cursor:
-                    self.set_permanent()
                     return True
+            else:
+                return False
         else:
             return False
 
+
+node = ProgramNode()
+node.parse()
+
+printNode(node, [])
