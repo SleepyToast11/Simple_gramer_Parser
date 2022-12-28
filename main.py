@@ -1,32 +1,6 @@
 # Jerome Sparnaay, Muhi Eddin Tahhan
 import sys
 
-#   Q2:
-#    based on software spec lecture notes
-#   ⟨block⟩ ::= { ⟨decls⟩ ⟨stmts⟩ }
-#   ⟨decls⟩ ::= ⟨decl⟩ ⟨decls⟩ | ε
-#   ⟨decl⟩ ::= ⟨type⟩ ID ;
-#   ⟨type⟩ ::= BASIC ⟨typeCl⟩
-#   ⟨typeCl⟩ ::= [ NUM ] ⟨typeCl⟩ | ε
-#   ⟨stmts⟩ ::= ⟨stmt⟩ ⟨stmts⟩ | ε
-#   ⟨stmt⟩ ::= ⟨loc⟩ = ⟨bool⟩ ;
-#   | IF ( ⟨bool⟩ ) ⟨stmt⟩ ELSE ⟨stmt⟩
-#   | WHILE ( ⟨bool⟩ ) ⟨stmt⟩
-#   | ⟨block⟩
-#   ⟨loc⟩ ::= ID ⟨locCl⟩
-#   ⟨locCl⟩ ::= [ ⟨bool⟩ ] ⟨locCl⟩ | ε
-#   ⟨bool⟩ ::= ⟨join⟩ || ⟨bool⟩ | ⟨join⟩
-#   ⟨join⟩ ::= ⟨equality⟩ && ⟨join⟩ | ⟨equality⟩
-#   ⟨equality⟩ ::= ⟨rel⟩ ⟨equalityCl⟩
-#   ⟨equalityCl⟩ ::= == ⟨equalityCl⟩ | != ⟨equalityCl⟩ | ε
-#   ⟨rel⟩ ::= ⟨expr⟩ ⟨relTail⟩
-#   ⟨relTail⟩ ::= < ⟨expr⟩ | > ⟨expr⟩ | ε
-#   ⟨expr⟩ ::= ⟨term⟩ ⟨exprTail⟩
-#   ⟨exprTail⟩ ::= + ⟨expr⟩ | - ⟨expr⟩ | ε
-#   ⟨term⟩ ::= ⟨unary⟩ ⟨termTail⟩
-#   ⟨termTail⟩ ::= * ⟨term⟩ | / ⟨term⟩ | ε
-#   ⟨unary⟩ ::= ! ⟨unary⟩ | - ⟨unary⟩ | ⟨factor⟩
-#   ⟨factor⟩ ::= ( ⟨bool⟩ ) | ⟨loc⟩ | NUM | REAL | TRUE | FALSE
 
 
 #   The parser works by chaining inside if statements verifications and tree building. We translate
@@ -41,6 +15,64 @@ import sys
 #   string for simplicity’s sake. All nodes are created from the same AbstractNode, so they have very similar functions.
 
 cursor = 0
+
+
+def go_right():
+    pass
+
+
+def go_up():
+    pass
+
+
+def go_left():
+    pass
+
+
+def go_down():
+    pass
+
+
+def can_go_down():
+    pass
+
+
+def can_go_left():
+    pass
+
+
+def can_go_up():
+    pass
+
+
+def can_go_right():
+    pass
+
+
+def get_ground():
+    pass
+
+
+def dig():
+    pass
+
+
+def set_ground():
+    pass
+
+
+GLOBAL_SCOPE = {"null": {"value": 0}
+    , "goRight": {"value": go_right()}
+    , "goUp": {"value": go_up()}
+    , "goLeft": {"value": go_left()}
+    , "goDown": {"value": go_down()}
+    , "canGoRight": {"value": can_go_right()}
+    , "canGoUp": {"value": can_go_up()}
+    , "canGoLeft": {"value": can_go_left()}
+    , "canGoDown": {"value": can_go_down()}
+    , "getGround": {"value": get_ground()}
+    , "setGround": {"value": set_ground()}
+    , "dig": {"value": dig()}}
 
 def convert(code):
     array = code.split()
